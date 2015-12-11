@@ -1,27 +1,21 @@
 # build docker image to run the unifi video nvr controller
 #
-# the unifi nvr video contoller is used to admin ubunquty ip cameras
+# the unifi nvr video contoller is used to admin ubiquity ip cameras
 #
 #
-FROM rednut/ubuntu:latest
-MAINTAINER stuart nixon dotcomstu@gmail.com
-ADD ./apt/ubuntu-sources.list /etc/apt/sources.list
+FROM ubuntu:14.04
 
-# add local apt proxy
-#RUN mkdir -p /etc/apt/apt.conf.d/ && echo 'Acquire::http { Proxy "http://apt-cacher-ng:3142"; };' >> /etc/apt/apt.conf.d/01proxy
+ADD ./apt/ubuntu-sources.list /etc/apt/sources.list
 
 # make apt non-interactive
 ENV DEBIAN_FRONTEND noninteractive
 
-# stop running services on install
-#ENV RUNLEVEL 1
-
 RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 16126D3A3E5C1192
 
-RUN \
-	apt-get update -y && \
-	apt-get install -q -y curl wget supervisor apt-utils lsb-release curl wget rsync util-linux psmisc && \
-	mkdir -p /var/log/supervisor /data/logs /data/data && \
+RUN apt-get update -y && \
+	  apt-get install -q -y curl wget supervisor apt-utils lsb-release curl wget rsync util-linux psmisc
+
+RUN	mkdir -p /var/log/supervisor /data/logs /data/data && \
   	touch /data/.unifi-video
 
 # add mongodb repo
@@ -36,13 +30,11 @@ RUN 	wget -q -O -  http://www.ubnt.com/downloads/unifi-video/apt/unifi-video.gpg
 # update repos
 RUN apt-get update -q -y
 
-# grab unifi video controller
+# grab unifi video controller, RUNLEVEL=1 is to stop running services on install
 RUN RUNLEVEL=1 apt-get install -q -y unifi-video
 
-	
 VOLUME /var/lib/unifi-video
 VOLUME /var/log/unifi-video
-
 
 # The following ports are used on UniFi Video hosts:
 
@@ -66,9 +58,7 @@ VOLUME /var/log/unifi-video
 # SSH to facilitate adoption by the controller on LAN (optional)
 # 554 RTSP server (mandatory only on gen1)
 
-
-EXPOSE  7447 7446 1935 7443 7080 6666 80 443 554 22
-
+EXPOSE  7447 7446 1935 7443 7080 6666 554
 
 # launcher config
 ADD ./supervisord.conf /etc/supervisor/conf.d/unifi-video.conf
